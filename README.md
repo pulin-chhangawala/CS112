@@ -89,4 +89,4 @@ Contributions are welcome! If you have any improvements or new data structures t
 
 ## License
 
-This repository is licensed under the MIT License. See the LICENSE file for more information.
+This repository is licensed under the GNU General Public License v3.0. See the LICENSE file for more information.
