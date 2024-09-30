@@ -287,7 +287,8 @@ public class ForensicAnalysis {
      * Requires the use of getUnmarkedPeople and removePerson.
      */
     public void cleanupTree() {
-        for(int i=0; i<getUnmarkedPeople().length; i++) removePerson(getUnmarkedPeople()[i]);
+        String[] N=getUnmarkedPeople();
+        for(int i=0; i<N.length; i++) removePerson(N[i]);
     }
 
     /**
