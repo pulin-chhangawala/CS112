@@ -1,6 +1,5 @@
 package conwaygame;
 import java.util.ArrayList;
-import java.util.Scanner;
 /**
  * Conway's Game of Life Class holds various methods that will
  * progress the state of the game's board through it's many iterations/generations.
@@ -45,9 +44,9 @@ public class GameOfLife {
     * An integer representing the number of grid columns, say c
     * Number of r lines, each containing c true or false values (true denotes an ALIVE cell)
     */
-    public GameOfLife (String file) 
-    {
-        StdIn.setFile(file);
+    public GameOfLife (String file) {
+
+      StdIn.setFile(file);
 
         int numRows = StdIn.readInt();
         int numColumns = StdIn.readInt();
@@ -96,12 +95,13 @@ public class GameOfLife {
      * @return true if there is at least one cell alive, otherwise returns false
      */
     public boolean isAlive () {
-        for(int i=0;i<grid.length;i++){
-            for(int j=0; j<grid[i].length;j++){
-                if(grid[i][j]) return ALIVE;
+        boolean State= DEAD;
+        for(int i=0; i<grid.length; i++){
+            for(int j=0; j<grid.length; j++){
+                if(grid[i][j]) State= ALIVE;
             }
         }
-        return DEAD;
+        return State;
     }
 
     /**
@@ -114,15 +114,28 @@ public class GameOfLife {
      * @return neighboringCells, the number of alive cells (at most 8).
      */
     public int numOfAliveNeighbors (int row, int col) {
-        int AliveNeighbours=0;
-        for(int i=row-1; i<=row+1; i++){
-            for(int j=col-1; j<=col+1; j++){
-                if(i==row&&j==col) AliveNeighbours+=0;
-                else if(grid[i][j]) AliveNeighbours++;
-                else AliveNeighbours+=0;
+
+        int numRows = grid.length;
+        int numCols = grid[0].length;
+        int neighboringCells = 0;
+
+        int[] dx = {-1, -1, -1, 0, 0, 1, 1, 1};
+        int[] dy = {-1, 0, 1, -1, 1, -1, 0, 1};
+
+        for (int i = 0; i < 8; i++) {
+            int newRow = row + dx[i];
+            int newCol = col + dy[i];
+
+            // Wrap around the grid for corner and side pieces
+            newRow = (newRow + numRows) % numRows;
+            newCol = (newCol + numCols) % numCols;
+
+            if (grid[newRow][newCol] == ALIVE) {
+                neighboringCells++;
             }
         }
-        return AliveNeighbours;
+
+        return neighboringCells;
     }
 
     /**
@@ -132,26 +145,44 @@ public class GameOfLife {
      * @return boolean[][] of new grid (this is a new 2D array)
      */
     public boolean[][] computeNewGrid () {
-        boolean NextGen[][]=new boolean[grid.length][grid[0].length];
-        for(int i=0;i<grid.length;i++){
-            for(int j=0; j<grid[i].length;j++){
-                if(numOfAliveNeighbors(i, j)==0||numOfAliveNeighbors(i, j)==1) NextGen[i][j]=DEAD;
-                if(numOfAliveNeighbors(i, j)==2&&grid[i][j]==DEAD) NextGen[i][j]=DEAD;
-                if((numOfAliveNeighbors(i, j)==3)||(numOfAliveNeighbors(i, j)==2&&grid[i][j]==ALIVE)) NextGen[i][j]=ALIVE;
-                if(numOfAliveNeighbors(i, j)>3) NextGen[i][j]=DEAD;
+
+        int rows = grid.length;
+        int cols = grid[0].length;
+        boolean[][] newGrid = new boolean[rows][cols];
+
+        for (int row = 0; row < rows; row++) {
+            for (int col = 0; col < cols; col++) {
+                int aliveNeighbors = numOfAliveNeighbors(row, col);
+
+                if (grid[row][col]) {
+                    if (aliveNeighbors == 2 || aliveNeighbors == 3) {
+                        newGrid[row][col] = true;
+                    }
+                } else {
+                    if (aliveNeighbors == 3) {
+                        newGrid[row][col] = true;
+                    }
+                }
             }
         }
-        return NextGen;
+
+        return newGrid;
     }
 
     /**
      * Updates the current grid (the grid instance variable) with the grid denoting
      * the next generation of cells computed by computeNewGrid().
      * 
-     * Updates totalAliveCells instance variable  
+     * Updates totalAliveCells instance variable
      */
     public void nextGeneration () {
-
+        grid= computeNewGrid();
+        totalAliveCells=0;
+        for (int row = 0; row < grid.length; row++) {
+            for (int col = 0; col < grid[0].length; col++) {
+                if(grid[row][col]) totalAliveCells++;
+            }
+        }
     }
 
     /**
@@ -159,8 +190,9 @@ public class GameOfLife {
      * @param n number of iterations that the grid will go through to compute a new grid
      */
     public void nextGeneration (int n) {
-
-        // WRITE YOUR CODE HERE
+        for(int i=0; i<n; i++){
+            grid=computeNewGrid();
+        }
     }
 
     /**
@@ -168,8 +200,44 @@ public class GameOfLife {
      * @return the number of communities in the grid, communities can be formed from edges
      */
     public int numOfCommunities() {
+        WeightedQuickUnionUF UnionGrid = new WeightedQuickUnionUF(grid.length, grid[0].length);
+        int numRows = grid.length;
+        int numCols = grid[0].length;
 
-        // WRITE YOUR CODE HERE
-        return 0; // update this line, provided so that code compiles
+        for(int row=0; row<grid.length; row++){
+            for(int col=0; col<grid[0].length; col++){
+                if(grid[row][col]){
+                    int[] dx = {-1, -1, -1, 0, 0, 1, 1, 1};
+                    int[] dy = {-1, 0, 1, -1, 1, -1, 0, 1};
+
+                    for (int i = 0; i < 8; i++) {
+                        int newRow = row + dx[i];
+                        int newCol = col + dy[i];
+
+                        newRow = (newRow + numRows) % numRows;
+                        newCol = (newCol + numCols) % numCols;
+
+                        if (grid[newRow][newCol]) {
+                            UnionGrid.union(row,col,newRow,newCol);
+                        }
+                    }
+                }
+            }
+        }
+
+        boolean[] uniqueRoots = new boolean[numRows * numCols];
+        int count = 0;
+        for (int row = 0; row < numRows; row++) {
+            for (int col = 0; col < numCols; col++) {
+                if (grid[row][col] == ALIVE) {
+                    int root=UnionGrid.find(row, col);
+                    if (!uniqueRoots[root]) {
+                        uniqueRoots[root] = true;
+                        count++;
+                    }
+                }
+            }
+        }
+        return count;
     }
 }
